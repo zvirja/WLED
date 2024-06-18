@@ -153,11 +153,26 @@ void publishMqtt()
   strcat_P(subuf, PSTR("/status"));
   mqtt->publish(subuf, 0, true, "online");          // retain message for a LWT
 
-  char apires[1024];                                // allocating 1024 bytes from stack can be risky
-  XML_response(nullptr, apires);
-  strlcpy(subuf, mqttDeviceTopic, 33);
-  strcat_P(subuf, PSTR("/v"));
-  mqtt->publish(subuf, 0, retainMqttMsg, apires);   // optionally retain message (#2263)
+  // char apires[1024];                                // allocating 1024 bytes from stack can be risky
+  // XML_response(nullptr, apires);
+  // strlcpy(subuf, mqttDeviceTopic, 33);
+  // strcat_P(subuf, PSTR("/v"));
+  // mqtt->publish(subuf, 0, retainMqttMsg, apires);   // optionally retain message (#2263)
+
+  // Print JSON as well
+  if (requestJSONBufferLock(66)) {
+    serializeState(doc.to<JsonObject>());
+
+    String json;
+    serializeJson(doc, json);
+
+    strlcpy(subuf, mqttDeviceTopic, 33);
+    strcat_P(subuf, PSTR("/jv"));
+    mqtt->publish(subuf, 0, retainMqttMsg, json.c_str());
+
+    releaseJSONBufferLock();
+  }
+
   #endif
 }
 
